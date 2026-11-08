@@ -238,7 +238,7 @@ function RegisterContent() {
 
                     <div>
                       <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                        Desired Subdomain / Identifier *
+                        Desired Subdomain / Identifier (optional)
                       </label>
                       <div className="flex items-center">
                         <span className="px-3.5 py-3 bg-slate-100 border border-r-0 border-slate-300 rounded-l-xl text-xs font-semibold text-slate-500">
@@ -246,7 +246,7 @@ function RegisterContent() {
                         </span>
                         <input
                           type="text"
-                          required
+                          // required
                           placeholder="apexcare"
                           value={formData.requestedSlug}
                           onChange={(e) =>
