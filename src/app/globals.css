@@ -30,6 +30,10 @@ body {
   padding: 0;
 }
 
+input, textarea, select {
+  color: #000000 !important;
+}
+
 /* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 6px;

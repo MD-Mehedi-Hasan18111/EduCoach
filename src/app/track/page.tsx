@@ -88,7 +88,8 @@ function TrackContent() {
               placeholder="e.g. REQ-7X8A91 or director@email.com"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="flex-1 px-2 py-2 text-sm focus:outline-none"
+              style={{ color: "#000000", backgroundColor: "transparent" }}
+              className="flex-1 px-3 py-2 text-sm !text-black font-semibold placeholder:text-slate-400 bg-transparent focus:outline-none"
             />
             <button
               type="submit"
