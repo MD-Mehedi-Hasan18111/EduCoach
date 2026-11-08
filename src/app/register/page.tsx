@@ -236,33 +236,6 @@ function RegisterContent() {
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                        Desired Subdomain / Identifier (optional)
-                      </label>
-                      <div className="flex items-center">
-                        <span className="px-3.5 py-3 bg-slate-100 border border-r-0 border-slate-300 rounded-l-xl text-xs font-semibold text-slate-500">
-                          https://
-                        </span>
-                        <input
-                          type="text"
-                          // required
-                          placeholder="apexcare"
-                          value={formData.requestedSlug}
-                          onChange={(e) =>
-                            setFormData({ ...formData, requestedSlug: slugify(e.target.value) })
-                          }
-                          className="flex-1 px-4 py-3 border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                        <span className="px-3.5 py-3 bg-slate-100 border border-l-0 border-slate-300 rounded-r-xl text-xs font-semibold text-slate-500">
-                          .educoach.app
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-500 mt-1">
-                        Your custom portal will be accessible at this web address.
-                      </p>
-                    </div>
-
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">

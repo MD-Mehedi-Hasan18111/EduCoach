@@ -56,13 +56,17 @@ export default function AdminRequestsPage() {
 
   const openApproveModal = (req: any) => {
     setApproveModal(req);
-    setSystemUrl(`https://${req.requestedSlug}.educoach.app`);
+    setSystemUrl("");
     setDatabaseName(`${req.requestedSlug}_coaching_db`);
     setInitialPassword("EduCoach@123");
   };
 
   const handleApprove = async () => {
     if (!approveModal) return;
+    if (!systemUrl.trim()) {
+      alert("Please provide the Live Coaching Website URL before approving.");
+      return;
+    }
     setProcessing(true);
     try {
       const res = await fetch(`/api/requests/${approveModal._id}`, {
@@ -159,8 +163,8 @@ export default function AdminRequestsPage() {
                     REF: {req.referenceCode}
                   </span>
                   <h3 className="text-lg font-bold text-slate-900">{req.coachingName}</h3>
-                  <span className="text-xs font-semibold text-blue-600 font-mono">
-                    ({req.requestedSlug}.educoach.app)
+                  <span className="text-xs font-semibold text-slate-500 font-mono">
+                    [{req.requestedSlug}]
                   </span>
 
                   {req.status === "PENDING" && (
@@ -291,15 +295,19 @@ export default function AdminRequestsPage() {
             <div className="space-y-4 text-xs">
               <div>
                 <label className="block font-bold text-slate-700 uppercase mb-1">
-                  Assigned Coaching Live URL *
+                  Live Coaching Website URL *
                 </label>
                 <input
-                  type="text"
+                  type="url"
                   required
+                  placeholder="e.g. https://al-hikmah-five.vercel.app or https://yourcoaching.com"
                   value={systemUrl}
                   onChange={(e) => setSystemUrl(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
                 />
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Provide the live deployed website URL for this coaching center (Vercel deployment or custom domain).
+                </p>
               </div>
 
               <div>

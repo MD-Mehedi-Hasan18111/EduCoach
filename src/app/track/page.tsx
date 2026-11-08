@@ -158,8 +158,12 @@ function TrackContent() {
                       <span className="font-bold text-slate-800">{formatDate(req.createdAt)}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block font-medium">Subdomain:</span>
-                      <span className="font-bold text-blue-600 font-mono">{req.requestedSlug}.educoach.app</span>
+                      <span className="text-slate-400 block font-medium">
+                        {req.assignedSystemUrl ? "Website URL:" : "System Identifier:"}
+                      </span>
+                      <span className="font-bold text-blue-600 font-mono truncate block">
+                        {req.assignedSystemUrl || req.requestedSlug}
+                      </span>
                     </div>
                     <div>
                       <span className="text-slate-400 block font-medium">Reviewed On:</span>

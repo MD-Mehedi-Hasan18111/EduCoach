@@ -54,11 +54,16 @@ export async function PATCH(
     }
 
     if (action === "APPROVE") {
-      // 1. Generate systemUrl and db name if not provided
-      const finalSystemUrl =
-        systemUrl || `https://${regRequest.requestedSlug}.educoach.app`;
+      // 1. Live website URL MUST be provided by the Master Admin (no auto-generated fake URLs)
+      if (!systemUrl || !systemUrl.trim()) {
+        return NextResponse.json(
+          { success: false, error: "Live coaching website URL is required. Please provide the Vercel or custom domain URL." },
+          { status: 400 }
+        );
+      }
+      const finalSystemUrl = systemUrl.trim();
       const finalDbName =
-        databaseName || `${regRequest.requestedSlug}_coaching_db`;
+        databaseName?.trim() || `${regRequest.requestedSlug}_coaching_db`;
       const licenseKey = generateLicenseKey(regRequest.requestedSlug);
 
       // 2. Hash initial portal password

@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: `The subdomain identifier '${normalizedSlug}' is already taken. Please choose another one.`,
+          error: `A coaching institute with identifier '${normalizedSlug}' already exists. Please use a distinct name.`,
         },
         { status: 409 }
       );

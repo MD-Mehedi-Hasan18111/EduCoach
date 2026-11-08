@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Server,
   Plus,
@@ -276,23 +277,22 @@ export default function AdminSystemsPage() {
           <Server className="w-10 h-10 text-slate-300 mx-auto" />
           <p className="text-base font-bold text-slate-800">No coaching systems registered in database yet.</p>
           <p className="text-xs text-slate-500 max-w-md mx-auto">
-            You can initialize the live demo instances (Al-Hikmah & Shikkhon) with one click, or manually register a new coaching institute.
+            Register a new coaching institute manually or review incoming registration requests submitted from the registration page.
           </p>
           <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
             <button
-              onClick={handleSeedDemoSystems}
-              disabled={seedingDemo}
+              onClick={() => setAddModalOpen(true)}
               className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-2"
             >
-              <Sparkles className="w-4 h-4 text-blue-200" />
-              <span>{seedingDemo ? "Initializing..." : "1-Click Initialize Al-Hikmah & Shikkhon"}</span>
+              <Plus className="w-4 h-4 text-blue-100" />
+              <span>Add Coaching System</span>
             </button>
-            <button
-              onClick={() => setAddModalOpen(true)}
-              className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all"
+            <Link
+              href="/admin/requests"
+              className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all inline-flex items-center gap-2"
             >
-              Add Custom System
-            </button>
+              <span>View Registration Requests</span>
+            </Link>
           </div>
         </div>
       ) : (
