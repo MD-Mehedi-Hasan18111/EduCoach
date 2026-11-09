@@ -8,7 +8,7 @@ import { Invoice } from "@/models/Invoice";
 import { Plan } from "@/models/Plan";
 import { ActivityLog } from "@/models/ActivityLog";
 import { requireSuperAdmin } from "@/lib/auth-helper";
-import { generateLicenseKey } from "@/lib/utils";
+import { generateLicenseKey, slugify } from "@/lib/utils";
 
 export async function PATCH(
   request: NextRequest,
@@ -62,9 +62,8 @@ export async function PATCH(
         );
       }
       const finalSystemUrl = systemUrl.trim();
-      const finalDbName =
-        databaseName?.trim() || `${regRequest.requestedSlug}_coaching_db`;
-      const licenseKey = generateLicenseKey(regRequest.requestedSlug);
+      const finalSlug = slugify(regRequest.requestedSlug || regRequest.coachingName, "coaching");
+      const licenseKey = generateLicenseKey(finalSlug);
 
       // 2. Hash initial portal password
       const rawPassword = initialPassword || "EduCoach@123";
@@ -90,11 +89,17 @@ export async function PATCH(
       // 4. Create Tenant
       const tenant = await Tenant.create({
         name: regRequest.coachingName,
-        slug: regRequest.requestedSlug,
+        slug: finalSlug,
+        logoUrl: regRequest.logoUrl || "",
+        tagline: regRequest.tagline || "",
+        establishedYear: regRequest.establishedYear || "",
+        facebookUrl: regRequest.facebookUrl || "",
+        youtubeUrl: regRequest.youtubeUrl || "",
+        websiteUrl: regRequest.websiteUrl || "",
+        batchTypes: regRequest.batchTypes || [],
+        description: regRequest.description || "",
         status: "ACTIVE",
         systemUrl: finalSystemUrl,
-        databaseName: finalDbName,
-        mongoUri: mongoUri || `mongodb://127.0.0.1:27017/${finalDbName}`,
         ownerName: regRequest.directorName,
         ownerEmail: regRequest.email,
         ownerPhone: regRequest.phone,

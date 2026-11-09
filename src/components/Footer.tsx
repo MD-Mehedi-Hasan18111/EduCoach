@@ -17,7 +17,7 @@ export function Footer() {
               </span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed">
-              যেকোনো কোচিং সেন্টারের জন্য পূর্ণাঙ্গ আধুনিক ওয়েবসাইট ও ম্যানেজমেন্ট সফটওয়্যার প্ল্যাটফর্ম। প্রতিটি প্রতিষ্ঠানের জন্য রয়েছে নিজস্ব ব্র্যান্ডিং, সম্পূর্ণ পৃথক ডেটাবেজ ও ক্লাউড হোস্টিং।
+              যেকোনো কোচিং সেন্টারের জন্য পূর্ণাঙ্গ আধুনিক ওয়েবসাইট ও ম্যানেজমেন্ট সফটওয়্যার প্ল্যাটফর্ম। প্রতিটি প্রতিষ্ঠানের জন্য রয়েছে নিজস্ব ব্র্যান্ডিং, লাইভ হোস্টিং ও ডেডিকেটেড ক্লাউড পোর্টাল।
             </p>
             <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-3 py-1.5 rounded-lg w-fit">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -133,7 +133,7 @@ export function Footer() {
           <div className="flex items-center gap-6">
             <span className="flex items-center gap-1.5 text-slate-400">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>১০০% স্বতন্ত্র ও নিরাপদ ক্লাউড ডেটাবেজ আর্কিটেকচার</span>
+              <span>১০০% নিরাপদ ও আধুনিক ক্লাউড আর্কিটেকচার</span>
             </span>
           </div>
         </div>

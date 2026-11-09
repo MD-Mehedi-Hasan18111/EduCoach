@@ -172,10 +172,10 @@ export default function HomePage() {
 
   const allCapabilities = [
     {
-      icon: Database,
+      icon: Globe,
       color: "blue",
-      title: "১০০% স্বতন্ত্র ক্লাউড ডেটাবেজ",
-      desc: "প্রতিটি কোচিং সেন্টারের তথ্যের জন্য সম্পূর্ণ আলাদা ক্লাউড ডেটাবেজ। এক প্রতিষ্ঠানের ডেটার সাথে অন্য প্রতিষ্ঠানের কোনো মিশ্রণ বা শেয়ারিং থাকে না।",
+      title: "ডেডিকেটেড লাইভ ওয়েবসাইট",
+      desc: "প্রতিটি কোচিং সেন্টারের জন্য নিজস্ব লাইভ ওয়েবসাইট ও ডোমেন। প্রতিষ্ঠানের নিজস্ব লোগো ও ব্র্যান্ডিংয়ে সম্পূর্ণ পরিচালিত পোর্টাল।",
     },
     {
       icon: Users,
@@ -246,7 +246,7 @@ export default function HomePage() {
             </h1>
 
             <p className="text-base sm:text-lg text-slate-300 leading-relaxed max-w-2xl mx-auto">
-              পাবলিক ওয়েবসাইট, শিক্ষার্থী ও শিক্ষক পোর্টাল, ডিজিটাল হাজিরা, পরীক্ষার ফলাফল, মাসিক ফি কালেকশন ও মেসেঞ্জার—সবকিছুই পাবেন আপনার নিজস্ব ব্র্যান্ড ও সম্পূর্ণ স্বাধীন ক্লাউড ডেটাবেজে। বর্তমানে আমাদের <strong>ফ্রি MVP প্যাকেজে</strong> যুক্ত হতে এখনই রেজিস্ট্রেশন করুন।
+              পাবলিক ওয়েবসাইট, শিক্ষার্থী ও শিক্ষক পোর্টাল, ডিজিটাল হাজিরা, পরীক্ষার ফলাফল, মাসিক ফি কালেকশন ও মেসেঞ্জার—সবকিছুই পাবেন আপনার নিজস্ব ব্র্যান্ড ও ডেডিকেটেড ক্লাউড প্ল্যাটফর্মে। বর্তমানে আমাদের <strong>ফ্রি MVP প্যাকেজে</strong> যুক্ত হতে এখনই রেজিস্ট্রেশন করুন।
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
@@ -272,8 +272,8 @@ export default function HomePage() {
                 <div className="text-xs text-slate-300 font-medium mt-1">২০০ শিক্ষার্থী ও ১০ ব্যাচ অন্তর্ভুক্ত</div>
               </div>
               <div className="p-4 rounded-2xl bg-slate-800/50 border border-slate-700/60 backdrop-blur-sm">
-                <div className="text-xl sm:text-2xl font-black text-blue-400">স্বতন্ত্র ডেটাবেজ</div>
-                <div className="text-xs text-slate-300 font-medium mt-1">সম্পূর্ণ পৃথক ও এনক্রিপ্টেড ক্লাউড</div>
+                <div className="text-xl sm:text-2xl font-black text-blue-400">লাইভ ওয়েবসাইট</div>
+                <div className="text-xs text-slate-300 font-medium mt-1">কাস্টম ডোমেন ও নিজস্ব ব্র্যান্ডিং</div>
               </div>
               <div className="p-4 rounded-2xl bg-slate-800/50 border border-slate-700/60 backdrop-blur-sm">
                 <div className="text-xl sm:text-2xl font-black text-sky-400">৩টি পোর্টাল</div>
@@ -303,9 +303,9 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Module Selector Tabs - Compact, Centered Segmented Control */}
-          <div className="flex justify-center mb-10 px-2">
-            <div className="inline-flex items-center p-1 sm:p-1.5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl backdrop-blur-md gap-1 sm:gap-1.5 flex-wrap justify-center max-w-full">
+          {/* Module Selector Tabs - Compact, Sleek Segmented Control */}
+          <div className="flex justify-center mb-8 px-2">
+            <div className="inline-flex items-center p-1 rounded-xl bg-slate-900/95 border border-slate-800/80 shadow-lg backdrop-blur-md gap-1 flex-wrap sm:flex-nowrap justify-center max-w-full overflow-x-auto">
               {portfolioModules.map((mod, index) => {
                 const Icon = mod.icon;
                 const isSelected = activeTab === index;
@@ -313,14 +313,14 @@ export default function HomePage() {
                   <button
                     key={mod.id}
                     onClick={() => setActiveTab(index)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl font-bold text-xs transition-all whitespace-nowrap cursor-pointer ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-xs transition-all whitespace-nowrap cursor-pointer ${
                       isSelected
-                        ? "bg-blue-600 text-white shadow-md shadow-blue-500/25 ring-1 ring-blue-400"
-                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/80"
+                        ? "bg-blue-600 text-white font-bold shadow-sm shadow-blue-500/30"
+                        : "text-slate-400 hover:text-white hover:bg-slate-800/60"
                     }`}
                   >
                     <Icon className={`w-3.5 h-3.5 shrink-0 ${isSelected ? "text-white" : "text-slate-400"}`} />
-                    <span className="leading-none">{mod.tabLabel}</span>
+                    <span className="leading-tight">{mod.tabLabel}</span>
                   </button>
                 );
               })}
@@ -669,7 +669,7 @@ export default function HomePage() {
 
                   <div className="flex items-center gap-2.5 text-slate-300">
                     <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>১০০% আলাদা ক্লাউড ডেটাবেজ</span>
+                    <span>ডেডিকেটেড লাইভ ওয়েবসাইট ও ডোমেন</span>
                   </div>
 
                   <div className="flex items-center gap-2.5 text-slate-300">

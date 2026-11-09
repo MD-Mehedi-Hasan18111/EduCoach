@@ -25,6 +25,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
 
+  const fetchPendingCount = async () => {
+    try {
+      const statsRes = await fetch("/api/stats");
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        setPendingCount(statsData.stats?.pendingRequests || 0);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
   useEffect(() => {
     async function checkAuth() {
       try {
@@ -35,13 +47,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           return;
         }
         setUser(data.user);
-
-        // Fetch pending count
-        const statsRes = await fetch("/api/stats");
-        if (statsRes.ok) {
-          const statsData = await statsRes.json();
-          setPendingCount(statsData.stats?.pendingRequests || 0);
-        }
+        await fetchPendingCount();
       } catch (err) {
         router.push("/login");
       } finally {
@@ -50,6 +56,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
     checkAuth();
   }, [router]);
+
+  useEffect(() => {
+    fetchPendingCount();
+    const handleRefresh = () => {
+      fetchPendingCount();
+    };
+    window.addEventListener("refresh-pending-count", handleRefresh);
+    return () => window.removeEventListener("refresh-pending-count", handleRefresh);
+  }, [pathname]);
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });

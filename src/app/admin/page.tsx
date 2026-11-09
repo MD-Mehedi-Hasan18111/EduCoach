@@ -13,7 +13,6 @@ import {
   ExternalLink,
   ShieldCheck,
   Activity,
-  Database,
   Sliders,
   DollarSign,
 } from "lucide-react";
@@ -76,7 +75,7 @@ export default function AdminOverviewPage() {
               </h4>
               <p className="text-xs text-amber-700">
                 New institutes have registered and are requesting dedicated coaching websites and
-                database provisioning.
+                management system setup.
               </p>
             </div>
           </div>
@@ -173,7 +172,7 @@ export default function AdminOverviewPage() {
           <div>
             <h3 className="text-base font-bold text-slate-900">Registered Coaching Systems</h3>
             <p className="text-xs text-slate-500">
-              Manage live access, dedicated database configurations, and status
+              Manage live access, deployed websites, and subscription status
             </p>
           </div>
           <Link
@@ -185,13 +184,13 @@ export default function AdminOverviewPage() {
           </Link>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-bold border-y border-slate-200">
               <tr>
                 <th className="py-3 px-4">Coaching Name</th>
-                <th className="py-3 px-4">Subdomain / URL</th>
-                <th className="py-3 px-4">Database</th>
+                <th className="py-3 px-4">Website URL</th>
                 <th className="py-3 px-4">Plan</th>
                 <th className="py-3 px-4">Accessibility</th>
                 <th className="py-3 px-4 text-right">Action</th>
@@ -201,9 +200,24 @@ export default function AdminOverviewPage() {
               {systems.slice(0, 5).map((sys) => (
                 <tr key={sys._id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="py-3 px-4">
-                    <div className="font-bold text-slate-900">{sys.name}</div>
-                    <div className="text-[11px] text-slate-400">
-                      {sys.ownerName} ({sys.ownerEmail})
+                    <div className="flex items-center gap-3">
+                      {sys.logoUrl ? (
+                        <img
+                          src={sys.logoUrl}
+                          alt={sys.name}
+                          className="w-8 h-8 rounded-lg object-contain bg-slate-50 border border-slate-200 p-0.5 shrink-0"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 font-bold flex items-center justify-center text-xs shrink-0">
+                          {sys.name?.charAt(0) || "C"}
+                        </div>
+                      )}
+                      <div>
+                        <div className="font-bold text-slate-900">{sys.name}</div>
+                        <div className="text-[11px] text-slate-400">
+                          {sys.ownerName} ({sys.ownerEmail})
+                        </div>
+                      </div>
                     </div>
                   </td>
                   <td className="py-3 px-4 font-mono text-slate-700">
@@ -211,16 +225,11 @@ export default function AdminOverviewPage() {
                       href={sys.systemUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-blue-600 hover:underline flex items-center gap-1"
+                      className="text-blue-600 hover:underline flex items-center gap-1 font-bold"
                     >
                       <span>{sys.systemUrl}</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
-                  </td>
-                  <td className="py-3 px-4 font-mono text-slate-600">
-                    <span className="bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                      {sys.databaseName}
-                    </span>
                   </td>
                   <td className="py-3 px-4">
                     <span className="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
@@ -250,7 +259,7 @@ export default function AdminOverviewPage() {
                   <td className="py-3 px-4 text-right">
                     <Link
                       href={`/admin/systems`}
-                      className="px-3 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 rounded-lg font-bold transition-all"
+                      className="px-3 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 rounded-lg font-bold transition-all inline-block"
                     >
                       Configure
                     </Link>
@@ -259,6 +268,85 @@ export default function AdminOverviewPage() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Responsive Cards View */}
+        <div className="block md:hidden divide-y divide-slate-100">
+          {systems.slice(0, 5).map((sys) => (
+            <div key={sys._id} className="p-4 space-y-3 bg-white rounded-2xl border border-slate-100 mb-3 shadow-2xs">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                  {sys.logoUrl ? (
+                    <img
+                      src={sys.logoUrl}
+                      alt={sys.name}
+                      className="w-10 h-10 rounded-xl object-contain bg-slate-50 border border-slate-200 p-0.5 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 font-bold flex items-center justify-center text-sm shrink-0">
+                      {sys.name?.charAt(0) || "C"}
+                    </div>
+                  )}
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-sm">{sys.name}</h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      {sys.ownerName} • {sys.ownerEmail}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  {sys.status === "ACTIVE" && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                      ACTIVE
+                    </span>
+                  )}
+                  {sys.status === "MAINTENANCE" && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                      MAINTENANCE
+                    </span>
+                  )}
+                  {sys.status === "SUSPENDED" && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                      SUSPENDED
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400 text-[11px]">Live Website:</span>
+                  <a
+                    href={sys.systemUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-600 hover:underline flex items-center gap-1 font-bold font-mono text-xs truncate max-w-[200px]"
+                  >
+                    <span className="truncate">{sys.systemUrl}</span>
+                    <ExternalLink className="w-3 h-3 shrink-0" />
+                  </a>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400 text-[11px]">Plan:</span>
+                  <span className="font-bold text-xs text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
+                    {sys.planCode}
+                  </span>
+                </div>
+              </div>
+
+              <div className="pt-1 flex items-center justify-end">
+                <Link
+                  href={`/admin/systems`}
+                  className="w-full text-center py-2 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-800 rounded-xl text-xs font-bold transition-all"
+                >
+                  Configure System
+                </Link>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

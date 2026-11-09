@@ -13,14 +13,22 @@ export async function POST(request: NextRequest) {
     const {
       coachingName,
       requestedSlug,
+      logoUrl,
+      tagline,
+      establishedYear,
+      facebookUrl,
+      youtubeUrl,
+      websiteUrl,
+      batchTypes,
+      description,
       directorName,
       email,
       phone,
       address,
       city,
       estimatedStudents,
-      planCode = "STANDARD",
-      billingCycle = "MONTHLY",
+      planCode = "FREE",
+      billingCycle = "YEARLY",
       customRequirements,
     } = body;
 
@@ -33,18 +41,12 @@ export async function POST(request: NextRequest) {
 
     await connectToDatabase();
 
-    const normalizedSlug = slugify(requestedSlug || coachingName);
+    let normalizedSlug = slugify(requestedSlug || coachingName, "coaching");
 
-    // Check if slug is already taken in active tenants
+    // If slug is already taken in active tenants, append a short unique suffix so request succeeds
     const existingTenant = await Tenant.findOne({ slug: normalizedSlug });
     if (existingTenant) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `A coaching institute with identifier '${normalizedSlug}' already exists. Please use a distinct name.`,
-        },
-        { status: 409 }
-      );
+      normalizedSlug = `${normalizedSlug}-${Math.random().toString(36).substring(2, 6)}`;
     }
 
     const referenceCode = generateReferenceCode("REQ");
@@ -53,6 +55,14 @@ export async function POST(request: NextRequest) {
       referenceCode,
       coachingName: coachingName.trim(),
       requestedSlug: normalizedSlug,
+      logoUrl: logoUrl?.trim() || "",
+      tagline: tagline?.trim() || "",
+      establishedYear: establishedYear?.trim() || "",
+      facebookUrl: facebookUrl?.trim() || "",
+      youtubeUrl: youtubeUrl?.trim() || "",
+      websiteUrl: websiteUrl?.trim() || "",
+      batchTypes: Array.isArray(batchTypes) ? batchTypes : [],
+      description: description?.trim() || "",
       directorName: directorName.trim(),
       email: email.toLowerCase().trim(),
       phone: phone.trim(),
@@ -112,9 +122,22 @@ export async function GET(request: NextRequest) {
 
     const requests = await RegistrationRequest.find(query).sort({ createdAt: -1 });
 
+    const [pendingCount, approvedCount, rejectedCount, totalCount] = await Promise.all([
+      RegistrationRequest.countDocuments({ status: "PENDING" }),
+      RegistrationRequest.countDocuments({ status: "APPROVED" }),
+      RegistrationRequest.countDocuments({ status: "REJECTED" }),
+      RegistrationRequest.countDocuments(),
+    ]);
+
     return NextResponse.json({
       success: true,
       count: requests.length,
+      counts: {
+        PENDING: pendingCount,
+        APPROVED: approvedCount,
+        REJECTED: rejectedCount,
+        ALL: totalCount,
+      },
       requests,
     });
   } catch (error: any) {

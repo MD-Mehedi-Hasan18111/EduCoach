@@ -54,6 +54,14 @@ export async function POST(request: NextRequest) {
     const {
       name,
       slug,
+      logoUrl,
+      tagline,
+      establishedYear,
+      facebookUrl,
+      youtubeUrl,
+      websiteUrl,
+      batchTypes,
+      description,
       systemUrl,
       databaseName,
       mongoUri,
@@ -61,29 +69,26 @@ export async function POST(request: NextRequest) {
       ownerEmail,
       ownerPhone,
       portalPassword,
-      planCode = "STANDARD",
+      planCode = "FREE",
       subscriptionMonths = 12,
       features,
       notes,
     } = body;
 
-    if (!name || !systemUrl || !databaseName || !ownerName || !ownerEmail) {
+    if (!name || !systemUrl || !ownerName || !ownerEmail) {
       return NextResponse.json(
-        { success: false, error: "Missing required fields." },
+        { success: false, error: "Missing required fields (Name, System URL, Director Name, Director Email are required)." },
         { status: 400 }
       );
     }
 
     await connectToDatabase();
     await autoSeedMasterDatabase();
-    const cleanSlug = slugify(slug || name);
+    let cleanSlug = slugify(slug || name, "coaching");
 
     const existing = await Tenant.findOne({ slug: cleanSlug });
     if (existing) {
-      return NextResponse.json(
-        { success: false, error: `A coaching system with slug '${cleanSlug}' already exists.` },
-        { status: 409 }
-      );
+      cleanSlug = `${cleanSlug}-${Math.random().toString(36).substring(2, 6)}`;
     }
 
     const rawPassword = portalPassword || "coaching123";
@@ -100,10 +105,18 @@ export async function POST(request: NextRequest) {
     const tenant = await Tenant.create({
       name: name.trim(),
       slug: cleanSlug,
+      logoUrl: logoUrl?.trim() || "",
+      tagline: tagline?.trim() || "",
+      establishedYear: establishedYear?.trim() || "",
+      facebookUrl: facebookUrl?.trim() || "",
+      youtubeUrl: youtubeUrl?.trim() || "",
+      websiteUrl: websiteUrl?.trim() || "",
+      batchTypes: Array.isArray(batchTypes) ? batchTypes : [],
+      description: description?.trim() || "",
       status: "ACTIVE",
       systemUrl: systemUrl.trim(),
-      databaseName: databaseName.trim(),
-      mongoUri: mongoUri?.trim() || `mongodb://127.0.0.1:27017/${databaseName.trim()}`,
+      databaseName: databaseName?.trim() || "",
+      mongoUri: mongoUri?.trim() || "",
       ownerName: ownerName.trim(),
       ownerEmail: ownerEmail.toLowerCase().trim(),
       ownerPhone: ownerPhone?.trim() || "",

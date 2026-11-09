@@ -13,7 +13,6 @@ import {
   CheckCircle2,
   AlertTriangle,
   XCircle,
-  Database,
   Calendar,
   Lock,
   Trash2,
@@ -22,6 +21,8 @@ import {
   Key,
   Globe,
   Sparkles,
+  Share2,
+  BookOpen,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
@@ -39,49 +40,15 @@ export default function AdminSystemsPage() {
   const [statusReason, setStatusReason] = useState<string>("");
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
-  // DB Stats Modal state
-  const [dbModal, setDbModal] = useState<any | null>(null);
-  const [dbLoading, setDbLoading] = useState(false);
-  const [dbData, setDbData] = useState<any | null>(null);
-  const [seedingDemo, setSeedingDemo] = useState(false);
-
-  const handleSeedDemoSystems = async () => {
-    setSeedingDemo(true);
-    try {
-      const res = await fetch("/api/systems/seed", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to initialize demo systems.");
-      loadSystems();
-      alert("Al-Hikmah & Shikkhon live systems have been initialized in your cloud database!");
-    } catch (err: any) {
-      alert(err.message);
-    } finally {
-      setSeedingDemo(false);
-    }
-  };
-
-  const handleInspectDb = async (sys: any) => {
-    setDbModal(sys);
-    setDbData(null);
-    setDbLoading(true);
-    try {
-      const res = await fetch(`/api/systems/${sys._id}/stats`);
-      const data = await res.json();
-      setDbData(data);
-    } catch (err: any) {
-      setDbData({ success: false, message: err.message });
-    } finally {
-      setDbLoading(false);
-    }
-  };
-
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [newSystemData, setNewSystemData] = useState({
     name: "",
     slug: "",
-    systemUrl: "https://",
-    databaseName: "",
-    mongoUri: "",
+    logoUrl: "",
+    tagline: "",
+    facebookUrl: "",
+    batchTypes: ["Class 9-10 (SSC Program)", "Class 11-12 (HSC Science)"] as string[],
+    systemUrl: "",
     ownerName: "",
     ownerEmail: "",
     ownerPhone: "",
@@ -90,6 +57,85 @@ export default function AdminSystemsPage() {
   });
   const [addingSystem, setAddingSystem] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
+
+  // Edit System Modal state
+  const [editModal, setEditModal] = useState<any | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<any>({
+    name: "",
+    systemUrl: "",
+    logoUrl: "",
+    tagline: "",
+    facebookUrl: "",
+    planCode: "FREE",
+    subscriptionStatus: "ACTIVE",
+    subscriptionExpiresAt: "",
+    ownerName: "",
+    ownerEmail: "",
+    ownerPhone: "",
+    features: {
+      smsAlerts: false,
+      onlineAdmission: true,
+      examPortal: true,
+      accountsManagement: true,
+      customDomain: false,
+      prioritySupport: false,
+    },
+    notes: "",
+  });
+
+  const openEditModal = (sys: any) => {
+    setEditModal(sys);
+    setEditError(null);
+    const expireDateStr = sys.subscriptionExpiresAt
+      ? new Date(sys.subscriptionExpiresAt).toISOString().split("T")[0]
+      : "";
+    setEditForm({
+      name: sys.name || "",
+      systemUrl: sys.systemUrl || "",
+      logoUrl: sys.logoUrl || "",
+      tagline: sys.tagline || "",
+      facebookUrl: sys.facebookUrl || "",
+      planCode: sys.planCode || "FREE",
+      subscriptionStatus: sys.subscriptionStatus || "ACTIVE",
+      subscriptionExpiresAt: expireDateStr,
+      ownerName: sys.ownerName || "",
+      ownerEmail: sys.ownerEmail || "",
+      ownerPhone: sys.ownerPhone || "",
+      features: {
+        smsAlerts: !!sys.features?.smsAlerts,
+        onlineAdmission: !!sys.features?.onlineAdmission,
+        examPortal: !!sys.features?.examPortal,
+        accountsManagement: !!sys.features?.accountsManagement,
+        customDomain: !!sys.features?.customDomain,
+        prioritySupport: !!sys.features?.prioritySupport,
+      },
+      notes: sys.notes || "",
+    });
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editModal) return;
+    setSavingEdit(true);
+    setEditError(null);
+    try {
+      const res = await fetch(`/api/systems/${editModal._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editForm),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update coaching system.");
+      setEditModal(null);
+      loadSystems();
+    } catch (err: any) {
+      setEditError(err.message);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   const loadSystems = async () => {
     try {
@@ -163,9 +209,11 @@ export default function AdminSystemsPage() {
       setNewSystemData({
         name: "",
         slug: "",
-        systemUrl: "https://",
-        databaseName: "",
-        mongoUri: "",
+        logoUrl: "",
+        tagline: "",
+        facebookUrl: "",
+        batchTypes: ["Class 9-10 (SSC Program)", "Class 11-12 (HSC Science)"],
+        systemUrl: "",
         ownerName: "",
         ownerEmail: "",
         ownerPhone: "",
@@ -187,7 +235,7 @@ export default function AdminSystemsPage() {
         <div>
           <h1 className="text-2xl font-black text-slate-900">Coaching Systems Management</h1>
           <p className="text-xs text-slate-500">
-            Control remote accessibility, dedicated cloud databases, and subscription tiers
+            Control remote accessibility, deployed coaching websites, and subscription tiers
           </p>
         </div>
 
@@ -300,25 +348,53 @@ export default function AdminSystemsPage() {
           {systems.map((sys) => (
             <div
               key={sys._id}
-              className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-5 flex flex-col justify-between"
+              className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4 sm:space-y-5 flex flex-col justify-between"
             >
               <div>
                 {/* Top header */}
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-bold text-slate-900">{sys.name}</h3>
-                      <span className="text-[10px] font-mono text-blue-600 bg-blue-50 px-2 py-0.5 rounded font-bold">
-                        {sys.slug}
-                      </span>
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    {sys.logoUrl ? (
+                      <div className="w-12 h-12 rounded-2xl border border-slate-200 overflow-hidden bg-slate-50 shrink-0 p-1 flex items-center justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={sys.logoUrl}
+                          alt={sys.name}
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = "none";
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-700 font-black text-lg flex items-center justify-center shrink-0">
+                        {sys.name.charAt(0)}
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900">{sys.name}</h3>
+                      {sys.tagline && (
+                        <p className="text-xs text-slate-500 italic mt-0.5">&ldquo;{sys.tagline}&rdquo;</p>
+                      )}
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Director: {sys.ownerName} ({sys.ownerEmail})
+                      </p>
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Director: {sys.ownerName} ({sys.ownerEmail})
-                    </p>
                   </div>
 
-                  {/* Accessibility Badge */}
-                  <div>
+                  {/* Accessibility Badge & Social link */}
+                  <div className="flex items-center gap-2 self-start sm:self-auto">
+                    {sys.facebookUrl && (
+                      <a
+                        href={sys.facebookUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold flex items-center gap-1"
+                      >
+                        <Share2 className="w-3 h-3" />
+                        <span>Facebook</span>
+                      </a>
+                    )}
                     {sys.status === "ACTIVE" && (
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -339,6 +415,23 @@ export default function AdminSystemsPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Batch Types Pills if any */}
+                {sys.batchTypes && sys.batchTypes.length > 0 && (
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                    <span className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1 mr-0.5">
+                      <BookOpen className="w-3 h-3" /> Batches:
+                    </span>
+                    {sys.batchTypes.map((batch: string) => (
+                      <span
+                        key={batch}
+                        className="text-[10px] font-semibold bg-blue-50 text-blue-800 border border-blue-200/60 px-2 py-0.5 rounded-md"
+                      >
+                        {batch}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
                 {/* Status Notice if Maintenance or Suspended */}
                 {(sys.status === "MAINTENANCE" || sys.status === "SUSPENDED") && (
@@ -363,15 +456,6 @@ export default function AdminSystemsPage() {
                       <span>{sys.systemUrl}</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500 flex items-center gap-1.5">
-                      <Database className="w-3.5 h-3.5 text-indigo-500" /> Dedicated Database:
-                    </span>
-                    <span className="font-mono font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200">
-                      {sys.databaseName}
-                    </span>
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -434,37 +518,37 @@ export default function AdminSystemsPage() {
                 </div>
               </div>
 
-              {/* Bottom Actions Bar */}
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
+              {/* Bottom Actions Bar - Responsive wrap for mobile cards */}
+              <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
                   <button
                     onClick={() => handlePing(sys._id)}
                     disabled={pingingId === sys._id}
-                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 disabled:opacity-60"
+                    className="flex-1 sm:flex-none px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 disabled:opacity-60"
                   >
                     <Activity
                       className={`w-3.5 h-3.5 ${pingingId === sys._id ? "animate-spin text-blue-600" : ""}`}
                     />
                     <span>{pingingId === sys._id ? "Pinging..." : "Ping"}</span>
                   </button>
-
-                  <button
-                    onClick={() => handleInspectDb(sys)}
-                    className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5"
-                  >
-                    <Database className="w-3.5 h-3.5" />
-                    <span>Inspect DB</span>
-                  </button>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={() => openEditModal(sys)}
+                    className="flex-1 sm:flex-none px-3.5 py-2 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                    <span>Edit</span>
+                  </button>
+
                   <button
                     onClick={() => {
                       setAccessibilityModal(sys);
                       setNewStatus(sys.status);
                       setStatusReason(sys.maintenanceReason || sys.suspensionReason || "");
                     }}
-                    className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
+                    className="flex-1 sm:flex-none px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
                   >
                     <Sliders className="w-3.5 h-3.5" />
                     <span>Control Access</span>
@@ -616,55 +700,72 @@ export default function AdminSystemsPage() {
                     setNewSystemData({
                       ...newSystemData,
                       name: e.target.value,
-                      databaseName: newSystemData.databaseName || `${e.target.value.toLowerCase().replace(/\s+/g, "_")}_db`,
                     })
                   }
                   className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
 
+              <div>
+                <label className="block font-bold text-slate-700 uppercase mb-1">
+                  Live Coaching Website URL *
+                </label>
+                <input
+                  type="url"
+                  required
+                  placeholder="https://yourcoaching.vercel.app or https://yourcoaching.com"
+                  value={newSystemData.systemUrl}
+                  onChange={(e) =>
+                    setNewSystemData({ ...newSystemData, systemUrl: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Provide the live deployed website URL for this coaching center.
+                </p>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">
-                    Slug / Identifier *
+                    Slogan / Tagline (Optional)
                   </label>
                   <input
                     type="text"
-                    required
-                    placeholder="alhikma"
-                    value={newSystemData.slug}
-                    onChange={(e) => setNewSystemData({ ...newSystemData, slug: e.target.value })}
+                    placeholder="e.g. জ্ঞানের আলোয় উদ্ভাসিত"
+                    value={newSystemData.tagline}
+                    onChange={(e) =>
+                      setNewSystemData({ ...newSystemData, tagline: e.target.value })
+                    }
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
                 <div>
                   <label className="block font-bold text-slate-700 uppercase mb-1">
-                    System Live URL *
+                    Logo Image URL (Optional)
                   </label>
                   <input
-                    type="text"
-                    required
-                    placeholder="https://yourcoaching.vercel.app"
-                    value={newSystemData.systemUrl}
+                    type="url"
+                    placeholder="https://example.com/logo.png"
+                    value={newSystemData.logoUrl}
                     onChange={(e) =>
-                      setNewSystemData({ ...newSystemData, systemUrl: e.target.value })
+                      setNewSystemData({ ...newSystemData, logoUrl: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono text-[11px]"
                   />
                 </div>
               </div>
 
               <div>
                 <label className="block font-bold text-slate-700 uppercase mb-1">
-                  Separate Database Name *
+                  Facebook Page / Group URL (Optional)
                 </label>
                 <input
-                  type="text"
-                  required
-                  placeholder="coaching_management_system"
-                  value={newSystemData.databaseName}
+                  type="url"
+                  placeholder="https://facebook.com/yourcoaching"
+                  value={newSystemData.facebookUrl}
                   onChange={(e) =>
-                    setNewSystemData({ ...newSystemData, databaseName: e.target.value })
+                    setNewSystemData({ ...newSystemData, facebookUrl: e.target.value })
                   }
                   className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
                 />
@@ -764,98 +865,288 @@ export default function AdminSystemsPage() {
           </div>
         </div>
       )}
-      {/* Database Inspection Modal */}
-      {dbModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6">
+
+      {/* Edit Coaching System Modal */}
+      {editModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl space-y-6 my-8 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full">
-                  Dedicated Database Diagnostics
+                  System Configuration
                 </span>
-                <h3 className="text-xl font-bold text-slate-900 mt-1">{dbModal.name}</h3>
-                <p className="text-xs text-slate-500 font-mono">DB: {dbModal.databaseName}</p>
+                <h3 className="text-xl font-bold text-slate-900 mt-1">
+                  Edit {editModal.name}
+                </h3>
               </div>
               <button
-                onClick={() => setDbModal(null)}
-                className="text-slate-400 hover:text-slate-600 font-bold"
+                onClick={() => setEditModal(null)}
+                className="text-slate-400 hover:text-slate-600 font-bold cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            {dbLoading ? (
-              <div className="py-12 text-center text-slate-500 flex flex-col items-center gap-3">
-                <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-xs font-semibold">Connecting to child database instance...</span>
+            {editError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl">
+                {editError}
               </div>
-            ) : dbData ? (
-              <div className="space-y-4">
-                {dbData.connected ? (
-                  <>
-                    <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Database connection established. {dbData.totalCollections} collections detected.</span>
-                    </div>
+            )}
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                        <span className="text-[10px] uppercase font-bold text-slate-500 block">Students</span>
-                        <span className="text-2xl font-black text-slate-900">{dbData.counts?.students || 0}</span>
-                      </div>
-                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                        <span className="text-[10px] uppercase font-bold text-slate-500 block">Teachers</span>
-                        <span className="text-2xl font-black text-slate-900">{dbData.counts?.teachers || 0}</span>
-                      </div>
-                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                        <span className="text-[10px] uppercase font-bold text-slate-500 block">Batches</span>
-                        <span className="text-2xl font-black text-slate-900">{dbData.counts?.batches || 0}</span>
-                      </div>
-                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                        <span className="text-[10px] uppercase font-bold text-slate-500 block">Exams</span>
-                        <span className="text-2xl font-black text-slate-900">{dbData.counts?.exams || 0}</span>
-                      </div>
-                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                        <span className="text-[10px] uppercase font-bold text-slate-500 block">Payments</span>
-                        <span className="text-2xl font-black text-slate-900">{dbData.counts?.payments || 0}</span>
-                      </div>
-                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                        <span className="text-[10px] uppercase font-bold text-slate-500 block">Collections</span>
-                        <span className="text-2xl font-black text-blue-600">{dbData.totalCollections || 0}</span>
-                      </div>
-                    </div>
+            <form onSubmit={handleSaveEdit} className="space-y-5 text-xs">
+              {/* Section 1: Core System & URL */}
+              <div className="space-y-3">
+                <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider text-blue-600 flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
+                  <Globe className="w-3.5 h-3.5" />
+                  <span>Core System &amp; Web Address</span>
+                </h4>
 
-                    <div className="space-y-1">
-                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Detected Collections:</span>
-                      <div className="flex flex-wrap gap-1">
-                        {dbData.collections?.map((c: string) => (
-                          <span key={c} className="text-[10px] font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
-                            {c}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="p-4 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-xl space-y-1">
-                    <span className="font-bold block">Could not query child database directly:</span>
-                    <p>{dbData.message || dbData.error}</p>
-                    <p className="text-[11px] text-slate-500 mt-2">
-                      Check that child database access permissions allow connections from your current network IP address.
-                    </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">
+                      Coaching Institute Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editForm.name}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
                   </div>
-                )}
-              </div>
-            ) : null}
 
-            <div className="pt-2 text-right">
-              <button
-                onClick={() => setDbModal(null)}
-                className="py-2.5 px-5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition-all"
-              >
-                Close
-              </button>
-            </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">
+                      Live Coaching Website URL *
+                    </label>
+                    <input
+                      type="url"
+                      required
+                      value={editForm.systemUrl}
+                      onChange={(e) => setEditForm({ ...editForm, systemUrl: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Subscription & Expiration */}
+              <div className="space-y-3 pt-2">
+                <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider text-blue-600 flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>Subscription Tier &amp; Status</span>
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">
+                      Plan Tier
+                    </label>
+                    <select
+                      value={editForm.planCode}
+                      onChange={(e) => setEditForm({ ...editForm, planCode: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                    >
+                      <option value="FREE">Free MVP Tier</option>
+                      <option value="STARTER">Starter Tier</option>
+                      <option value="STANDARD">Standard Growth</option>
+                      <option value="PRO">Institutional Pro</option>
+                      <option value="ENTERPRISE">Enterprise Multi-Campus</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">
+                      Subscription Status
+                    </label>
+                    <select
+                      value={editForm.subscriptionStatus}
+                      onChange={(e) => setEditForm({ ...editForm, subscriptionStatus: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                    >
+                      <option value="ACTIVE">ACTIVE (Active License)</option>
+                      <option value="TRIAL">TRIAL (Evaluation)</option>
+                      <option value="EXPIRED">EXPIRED (Suspended/Grace)</option>
+                      <option value="CANCELLED">CANCELLED</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">
+                      Expires On
+                    </label>
+                    <input
+                      type="date"
+                      value={editForm.subscriptionExpiresAt}
+                      onChange={(e) => setEditForm({ ...editForm, subscriptionExpiresAt: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Branding & Social */}
+              <div className="space-y-3 pt-2">
+                <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider text-blue-600 flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>Branding &amp; Social Links</span>
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">
+                      Slogan / Tagline
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. জ্ঞানের আলোয় উদ্ভাসিত"
+                      value={editForm.tagline}
+                      onChange={(e) => setEditForm({ ...editForm, tagline: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">
+                      Logo Image URL
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://example.com/logo.png"
+                      value={editForm.logoUrl}
+                      onChange={(e) => setEditForm({ ...editForm, logoUrl: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono text-[11px]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 uppercase mb-1">
+                    Facebook Page URL
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://facebook.com/yourcoaching"
+                    value={editForm.facebookUrl}
+                    onChange={(e) => setEditForm({ ...editForm, facebookUrl: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Section 4: Director Information */}
+              <div className="space-y-3 pt-2">
+                <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider text-blue-600 flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
+                  <span>Director &amp; Owner Contact</span>
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">
+                      Director Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editForm.ownerName}
+                      onChange={(e) => setEditForm({ ...editForm, ownerName: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">
+                      Owner Email *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={editForm.ownerEmail}
+                      onChange={(e) => setEditForm({ ...editForm, ownerEmail: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">
+                      Phone Number
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.ownerPhone}
+                      onChange={(e) => setEditForm({ ...editForm, ownerPhone: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 5: Feature Flags */}
+              <div className="space-y-3 pt-2">
+                <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider text-blue-600 flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
+                  <span>System Modules &amp; Feature Flags</span>
+                </h4>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  {[
+                    { key: "onlineAdmission", label: "Online Admission" },
+                    { key: "examPortal", label: "Exam & Results Portal" },
+                    { key: "accountsManagement", label: "Fee Accounts & Receipts" },
+                    { key: "smsAlerts", label: "SMS Alerts Gateway" },
+                    { key: "customDomain", label: "Custom Domain Mapping" },
+                    { key: "prioritySupport", label: "Priority SLA Support" },
+                  ].map((feat) => {
+                    const isChecked = !!editForm.features?.[feat.key];
+                    return (
+                      <button
+                        type="button"
+                        key={feat.key}
+                        onClick={() =>
+                          setEditForm({
+                            ...editForm,
+                            features: {
+                              ...editForm.features,
+                              [feat.key]: !isChecked,
+                            },
+                          })
+                        }
+                        className={`p-2.5 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${
+                          isChecked
+                            ? "bg-blue-50 border-blue-400 text-blue-900 font-bold"
+                            : "bg-slate-50 border-slate-200 text-slate-500"
+                        }`}
+                      >
+                        <span className="text-[11px]">{feat.label}</span>
+                        <span
+                          className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                            isChecked ? "bg-blue-600 text-white" : "border border-slate-300"
+                          }`}
+                        >
+                          {isChecked ? "✓" : ""}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="submit"
+                  disabled={savingEdit}
+                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition-all disabled:opacity-60 cursor-pointer"
+                >
+                  {savingEdit ? "Saving Changes..." : "Save System Changes"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditModal(null)}
+                  className="py-3 px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

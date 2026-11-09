@@ -15,6 +15,9 @@ import {
   ArrowRight,
   ShieldCheck,
   Sparkles,
+  Share2,
+  BookOpen,
+  Globe,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
@@ -23,11 +26,16 @@ export default function AdminRequestsPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("PENDING");
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
+  const [counts, setCounts] = useState<{ PENDING: number; APPROVED: number; REJECTED: number; ALL: number }>({
+    PENDING: 0,
+    APPROVED: 0,
+    REJECTED: 0,
+    ALL: 0,
+  });
 
   // Approval form state
   const [approveModal, setApproveModal] = useState<any | null>(null);
   const [systemUrl, setSystemUrl] = useState("");
-  const [databaseName, setDatabaseName] = useState("");
   const [initialPassword, setInitialPassword] = useState("EduCoach@123");
   const [processing, setProcessing] = useState(false);
 
@@ -42,6 +50,9 @@ export default function AdminRequestsPage() {
       const data = await res.json();
       if (res.ok) {
         setRequests(data.requests || []);
+        if (data.counts) {
+          setCounts(data.counts);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -57,7 +68,6 @@ export default function AdminRequestsPage() {
   const openApproveModal = (req: any) => {
     setApproveModal(req);
     setSystemUrl("");
-    setDatabaseName(`${req.requestedSlug}_coaching_db`);
     setInitialPassword("EduCoach@123");
   };
 
@@ -75,14 +85,14 @@ export default function AdminRequestsPage() {
         body: JSON.stringify({
           action: "APPROVE",
           systemUrl,
-          databaseName,
           initialPassword,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to approve request.");
       setApproveModal(null);
-      loadRequests();
+      await loadRequests();
+      window.dispatchEvent(new CustomEvent("refresh-pending-count"));
       alert(`Success! Coaching system provisioned with initial password: ${initialPassword}`);
     } catch (err: any) {
       alert(err.message);
@@ -106,7 +116,8 @@ export default function AdminRequestsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to reject request.");
       setRejectModal(null);
-      loadRequests();
+      await loadRequests();
+      window.dispatchEvent(new CustomEvent("refresh-pending-count"));
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -125,18 +136,32 @@ export default function AdminRequestsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          {["PENDING", "APPROVED", "REJECTED", "ALL"].map((st) => (
+        <div className="flex items-center gap-2 overflow-x-auto">
+          {[
+            { key: "PENDING", label: "Pending", count: counts.PENDING },
+            { key: "APPROVED", label: "Approved", count: counts.APPROVED },
+            { key: "REJECTED", label: "Declined", count: counts.REJECTED },
+            { key: "ALL", label: "All Requests", count: counts.ALL },
+          ].map((st) => (
             <button
-              key={st}
-              onClick={() => setStatusFilter(st)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                statusFilter === st
-                  ? "bg-slate-900 text-white"
+              key={st.key}
+              onClick={() => setStatusFilter(st.key)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                statusFilter === st.key
+                  ? "bg-slate-900 text-white shadow-sm"
                   : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              {st}
+              <span>{st.label}</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                  statusFilter === st.key
+                    ? "bg-slate-800 text-slate-200"
+                    : "bg-slate-100 text-slate-600"
+                }`}
+              >
+                {st.count}
+              </span>
             </button>
           ))}
         </div>
@@ -158,34 +183,109 @@ export default function AdminRequestsPage() {
               className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-6"
             >
               <div className="space-y-3 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
-                    REF: {req.referenceCode}
-                  </span>
-                  <h3 className="text-lg font-bold text-slate-900">{req.coachingName}</h3>
-                  <span className="text-xs font-semibold text-slate-500 font-mono">
-                    [{req.requestedSlug}]
-                  </span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    {req.logoUrl ? (
+                      <div className="w-12 h-12 rounded-2xl border border-slate-200 overflow-hidden bg-slate-50 shrink-0 p-1 flex items-center justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={req.logoUrl}
+                          alt={req.coachingName}
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = "none";
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-700 font-black text-lg flex items-center justify-center shrink-0">
+                        {req.coachingName.charAt(0)}
+                      </div>
+                    )}
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                          REF: {req.referenceCode}
+                        </span>
+                        <h3 className="text-base sm:text-lg font-bold text-slate-900">{req.coachingName}</h3>
+                        {req.status === "PENDING" && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                            <Clock className="w-3 h-3 animate-spin" />
+                            Pending Approval
+                          </span>
+                        )}
+                        {req.status === "APPROVED" && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Approved
+                          </span>
+                        )}
+                        {req.status === "REJECTED" && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                            <XCircle className="w-3 h-3" />
+                            Declined
+                          </span>
+                        )}
+                      </div>
+                      {req.tagline && (
+                        <p className="text-xs text-slate-500 italic mt-0.5">&ldquo;{req.tagline}&rdquo;</p>
+                      )}
+                    </div>
+                  </div>
 
-                  {req.status === "PENDING" && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                      <Clock className="w-3 h-3 animate-spin" />
-                      Pending Approval
-                    </span>
-                  )}
-                  {req.status === "APPROVED" && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                      <CheckCircle2 className="w-3 h-3" />
-                      Approved
-                    </span>
-                  )}
-                  {req.status === "REJECTED" && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
-                      <XCircle className="w-3 h-3" />
-                      Declined
-                    </span>
-                  )}
+                  {/* Social & Web badges */}
+                  <div className="flex items-center gap-1.5 self-start sm:self-auto">
+                    {req.facebookUrl && (
+                      <a
+                        href={req.facebookUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold flex items-center gap-1"
+                      >
+                        <Share2 className="w-3 h-3" />
+                        <span>Facebook</span>
+                      </a>
+                    )}
+                    {req.youtubeUrl && (
+                      <a
+                        href={req.youtubeUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-2.5 py-1 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 text-xs font-semibold flex items-center gap-1"
+                      >
+                        <span>YouTube</span>
+                      </a>
+                    )}
+                    {req.websiteUrl && (
+                      <a
+                        href={req.websiteUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-semibold flex items-center gap-1"
+                      >
+                        <Globe className="w-3 h-3" />
+                        <span>Site</span>
+                      </a>
+                    )}
+                  </div>
                 </div>
+
+                {/* Batch Types Pills */}
+                {req.batchTypes && req.batchTypes.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1">
+                      <BookOpen className="w-3 h-3" /> Batches:
+                    </span>
+                    {req.batchTypes.map((batch: string) => (
+                      <span
+                        key={batch}
+                        className="text-[11px] font-semibold bg-blue-50 text-blue-800 border border-blue-200/60 px-2 py-0.5 rounded-md"
+                      >
+                        {batch}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-slate-600 bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
                   <div>
@@ -196,7 +296,7 @@ export default function AdminRequestsPage() {
                   </div>
 
                   <div>
-                    <span className="text-slate-400 block font-medium">Plan & Cycle:</span>
+                    <span className="text-slate-400 block font-medium">Plan &amp; Cycle:</span>
                     <span className="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
                       {req.planCode} ({req.billingCycle})
                     </span>
@@ -308,19 +408,6 @@ export default function AdminRequestsPage() {
                 <p className="text-[11px] text-slate-500 mt-1">
                   Provide the live deployed website URL for this coaching center (Vercel deployment or custom domain).
                 </p>
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 uppercase mb-1">
-                  Dedicated Private Database *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={databaseName}
-                  onChange={(e) => setDatabaseName(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
-                />
               </div>
 
               <div>

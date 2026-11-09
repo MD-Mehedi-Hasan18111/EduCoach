@@ -6,6 +6,14 @@ export interface IRegistrationRequest extends Document {
   referenceCode: string;
   coachingName: string;
   requestedSlug: string;
+  logoUrl?: string;
+  tagline?: string;
+  establishedYear?: string;
+  facebookUrl?: string;
+  youtubeUrl?: string;
+  websiteUrl?: string;
+  batchTypes?: string[];
+  description?: string;
   directorName: string;
   email: string;
   phone: string;
@@ -30,7 +38,15 @@ const RegistrationRequestSchema = new Schema<IRegistrationRequest>(
   {
     referenceCode: { type: String, required: true, unique: true },
     coachingName: { type: String, required: true, trim: true },
-    requestedSlug: { type: String, required: true, lowercase: true, trim: true },
+    requestedSlug: { type: String, required: false, lowercase: true, trim: true, default: "" },
+    logoUrl: { type: String, default: "" },
+    tagline: { type: String, default: "" },
+    establishedYear: { type: String, default: "" },
+    facebookUrl: { type: String, default: "" },
+    youtubeUrl: { type: String, default: "" },
+    websiteUrl: { type: String, default: "" },
+    batchTypes: { type: [String], default: [] },
+    description: { type: String, default: "" },
     directorName: { type: String, required: true },
     email: { type: String, required: true, lowercase: true, trim: true },
     phone: { type: String, required: true, trim: true },

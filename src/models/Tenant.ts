@@ -18,9 +18,16 @@ export interface ITenant extends Document {
   name: string;
   slug: string;
   logoUrl?: string;
+  tagline?: string;
+  establishedYear?: string;
+  facebookUrl?: string;
+  youtubeUrl?: string;
+  websiteUrl?: string;
+  batchTypes?: string[];
+  description?: string;
   status: TenantStatus;
   systemUrl: string;
-  databaseName: string;
+  databaseName?: string;
   mongoUri?: string;
   ownerName: string;
   ownerEmail: string;
@@ -44,14 +51,21 @@ const TenantSchema = new Schema<ITenant>(
   {
     name: { type: String, required: true, trim: true },
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    logoUrl: { type: String },
+    logoUrl: { type: String, default: "" },
+    tagline: { type: String, default: "" },
+    establishedYear: { type: String, default: "" },
+    facebookUrl: { type: String, default: "" },
+    youtubeUrl: { type: String, default: "" },
+    websiteUrl: { type: String, default: "" },
+    batchTypes: { type: [String], default: [] },
+    description: { type: String, default: "" },
     status: {
       type: String,
       enum: ["ACTIVE", "SUSPENDED", "MAINTENANCE", "PENDING_SETUP"],
       default: "ACTIVE",
     },
     systemUrl: { type: String, required: true, trim: true },
-    databaseName: { type: String, required: true, trim: true },
+    databaseName: { type: String, default: "" },
     mongoUri: { type: String, default: "" },
     ownerName: { type: String, required: true },
     ownerEmail: { type: String, required: true, lowercase: true, trim: true },

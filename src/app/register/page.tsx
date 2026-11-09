@@ -22,8 +22,27 @@ import {
   AlertCircle,
   Clock,
   Copy,
+  Image as ImageIcon,
+  Share2,
+  BookOpen,
+  Plus,
+  X,
+  Calendar,
 } from "lucide-react";
 import { slugify } from "@/lib/utils";
+
+const STANDARD_BATCH_OPTIONS = [
+  "Class 6-8 (Junior Care)",
+  "Class 9-10 (SSC Program)",
+  "Class 11-12 (HSC Science)",
+  "Class 11-12 (HSC Commerce/Arts)",
+  "Medical College Admission",
+  "BUET & Engineering Admission",
+  "University Admission ('Ka'/'Kha'/'Ga')",
+  "English Medium / English Version",
+  "Cadet College Preparation",
+  "ICT & Spoken English",
+];
 
 function RegisterContent() {
   const searchParams = useSearchParams();
@@ -33,6 +52,17 @@ function RegisterContent() {
   const [formData, setFormData] = useState({
     coachingName: "",
     requestedSlug: "",
+    logoUrl: "",
+    tagline: "",
+    establishedYear: "",
+    facebookUrl: "",
+    youtubeUrl: "",
+    websiteUrl: "",
+    batchTypes: [
+      "Class 9-10 (SSC Program)",
+      "Class 11-12 (HSC Science)",
+    ] as string[],
+    description: "",
     directorName: "",
     email: "",
     phone: "",
@@ -44,16 +74,48 @@ function RegisterContent() {
     customRequirements: "",
   });
 
+  const [customBatchInput, setCustomBatchInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successResult, setSuccessResult] = useState<any | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (formData.coachingName && !formData.requestedSlug) {
+    if (formData.coachingName) {
       setFormData((prev) => ({ ...prev, requestedSlug: slugify(prev.coachingName) }));
     }
   }, [formData.coachingName]);
+
+  const toggleBatchType = (batch: string) => {
+    setFormData((prev) => {
+      const exists = prev.batchTypes.includes(batch);
+      return {
+        ...prev,
+        batchTypes: exists
+          ? prev.batchTypes.filter((b) => b !== batch)
+          : [...prev.batchTypes, batch],
+      };
+    });
+  };
+
+  const handleAddCustomBatch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = customBatchInput.trim();
+    if (trimmed && !formData.batchTypes.includes(trimmed)) {
+      setFormData((prev) => ({
+        ...prev,
+        batchTypes: [...prev.batchTypes, trimmed],
+      }));
+      setCustomBatchInput("");
+    }
+  };
+
+  const removeBatchType = (batch: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      batchTypes: prev.batchTypes.filter((b) => b !== batch),
+    }));
+  };
 
   const plansMeta: Record<
     string,
@@ -94,10 +156,14 @@ function RegisterContent() {
     setLoading(true);
 
     try {
+      const payload = {
+        ...formData,
+        requestedSlug: slugify(formData.requestedSlug || formData.coachingName, "coaching"),
+      };
       const res = await fetch("/api/requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -199,8 +265,7 @@ function RegisterContent() {
               Register Your Coaching Center
             </h1>
             <p className="text-slate-600 text-sm sm:text-base mt-2">
-              Request a dedicated coaching website, isolated private database, and complete student
-              management suite.
+              Request a dedicated coaching website, student management portal, and complete academic suite.
             </p>
           </div>
 
@@ -215,11 +280,11 @@ function RegisterContent() {
             {/* Form */}
             <div className="lg:col-span-7 bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm">
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Coaching Information */}
+                {/* 1. Coaching Institute Core Information */}
                 <div>
                   <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-4">
                     <Building2 className="w-4 h-4 text-blue-600" />
-                    <span>Institute Information</span>
+                    <span>Institute Branding & Core Details</span>
                   </h3>
                   <div className="space-y-4">
                     <div>
@@ -229,7 +294,7 @@ function RegisterContent() {
                       <input
                         type="text"
                         required
-                        placeholder="e.g. Apex Academic Care, Al Hikma Coaching"
+                        placeholder="e.g. Apex Academic Care, আল-হিকমাহ্ কোচিং একাডেমি"
                         value={formData.coachingName}
                         onChange={(e) => setFormData({ ...formData, coachingName: e.target.value })}
                         className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -239,11 +304,76 @@ function RegisterContent() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                          City / District
+                          Slogan / Tagline
                         </label>
                         <input
                           type="text"
-                          placeholder="e.g. Dhaka, Chittagong, Sylhet"
+                          placeholder="e.g. জ্ঞানের আলোয় আলোকিত ভবিষ্যৎ"
+                          value={formData.tagline}
+                          onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                          Established Year
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 2018"
+                          value={formData.establishedYear}
+                          onChange={(e) => setFormData({ ...formData, establishedYear: e.target.value })}
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Logo URL with instant live preview */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Institute Logo Image URL (Optional)
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="url"
+                          placeholder="https://example.com/logo.png or Google Drive/Imgur link"
+                          value={formData.logoUrl}
+                          onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
+                          className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-xs"
+                        />
+                        {formData.logoUrl ? (
+                          <div className="w-11 h-11 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 flex items-center justify-center shrink-0">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={formData.logoUrl}
+                              alt="Logo Preview"
+                              className="w-full h-full object-contain"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = "none";
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-11 h-11 rounded-xl border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center shrink-0 text-slate-400">
+                            <ImageIcon className="w-5 h-5" />
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        We will use this logo on your public website navigation, student admit cards, and receipts.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                          City / District *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Dhaka, Chittagong, Sylhet, Bogura"
                           value={formData.city}
                           onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                           className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -268,14 +398,178 @@ function RegisterContent() {
                         </select>
                       </div>
                     </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Campus Address / Branches
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. House #12, Road #4, Dhanmondi, Dhaka"
+                        value={formData.address}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                {/* Director / Owner Contact */}
+                {/* 2. Batch Types & Offerings */}
+                <div className="pt-4 border-t border-slate-200">
+                  <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-1">
+                    <BookOpen className="w-4 h-4 text-blue-600" />
+                    <span>Batch Offerings & Academic Programs</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mb-3">
+                    Select all batch types provided at your institute to prepare your website&apos;s courses &amp; admission forms:
+                  </p>
+
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {STANDARD_BATCH_OPTIONS.map((batch) => {
+                      const isSelected = formData.batchTypes.includes(batch);
+                      return (
+                        <button
+                          type="button"
+                          key={batch}
+                          onClick={() => toggleBatchType(batch)}
+                          className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer ${
+                            isSelected
+                              ? "bg-blue-600 border-blue-600 text-white shadow-sm"
+                              : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300"
+                          }`}
+                        >
+                          <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[10px] ${
+                            isSelected ? "bg-white text-blue-600 font-bold" : "border border-slate-300"
+                          }`}>
+                            {isSelected ? "✓" : ""}
+                          </span>
+                          <span>{batch}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Custom batch tag adder */}
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      type="text"
+                      placeholder="Add custom batch (e.g. BCS Preliminary, HSC ICT Special...)"
+                      value={customBatchInput}
+                      onChange={(e) => setCustomBatchInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddCustomBatch();
+                        }
+                      }}
+                      className="flex-1 px-3 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleAddCustomBatch()}
+                      className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1 shrink-0"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Batch</span>
+                    </button>
+                  </div>
+
+                  {/* Display selected batch summary */}
+                  {formData.batchTypes.length > 0 && (
+                    <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-2xl flex flex-wrap items-center gap-1.5">
+                      <span className="text-[11px] font-bold text-slate-600 uppercase mr-1">
+                        Selected Batches ({formData.batchTypes.length}):
+                      </span>
+                      {formData.batchTypes.map((batch) => (
+                        <span
+                          key={batch}
+                          className="inline-flex items-center gap-1 bg-white border border-slate-200 text-slate-800 text-[11px] font-medium px-2 py-0.5 rounded-lg shadow-2xs"
+                        >
+                          <span>{batch}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeBatchType(batch)}
+                            className="text-slate-400 hover:text-rose-600 font-bold ml-0.5"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. Social Media & Online Presence */}
+                <div className="pt-4 border-t border-slate-200">
+                  <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-1">
+                    <Share2 className="w-4 h-4 text-blue-600" />
+                    <span>Social Media &amp; Online Links</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mb-3">
+                    These links will be embedded in your live website&apos;s header, footer, and contact sections:
+                  </p>
+
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
+                          Facebook Page or Group Link
+                        </label>
+                        <input
+                          type="url"
+                          placeholder="https://facebook.com/yourcoaching"
+                          value={formData.facebookUrl}
+                          onChange={(e) => setFormData({ ...formData, facebookUrl: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
+                          YouTube Channel Link
+                        </label>
+                        <input
+                          type="url"
+                          placeholder="https://youtube.com/@yourcoaching"
+                          value={formData.youtubeUrl}
+                          onChange={(e) => setFormData({ ...formData, youtubeUrl: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
+                        Existing Website / Portfolio (Optional)
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://yourcoaching.com"
+                        value={formData.websiteUrl}
+                        onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 uppercase mb-1">
+                        Short Institute Bio / About Description
+                      </label>
+                      <textarea
+                        rows={2}
+                        placeholder="Brief background about the coaching, teaching methodology, or special achievements..."
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Director / Owner Contact */}
                 <div className="pt-4 border-t border-slate-200">
                   <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-4">
                     <User className="w-4 h-4 text-blue-600" />
-                    <span>Director / Owner Information</span>
+                    <span>Director / Owner Contact Information</span>
                   </h3>
                   <div className="space-y-4">
                     <div>
@@ -325,11 +619,11 @@ function RegisterContent() {
                   </div>
                 </div>
 
-                {/* Plan Selection */}
+                {/* 5. Subscription Plan Selection */}
                 <div className="pt-4 border-t border-slate-200">
                   <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-4">
                     <CreditCard className="w-4 h-4 text-blue-600" />
-                    <span>Subscription Plan & Cycle</span>
+                    <span>Subscription Plan &amp; Billing Cycle</span>
                   </h3>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
@@ -367,7 +661,7 @@ function RegisterContent() {
 
                   <div className="flex items-center gap-4 bg-slate-50 p-3 rounded-2xl border border-slate-200">
                     <span className="text-xs font-bold text-slate-700 uppercase">Billing Cycle:</span>
-                    <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                    <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer text-slate-800">
                       <input
                         type="radio"
                         name="billingCycle"
@@ -375,9 +669,9 @@ function RegisterContent() {
                         onChange={() => setFormData({ ...formData, billingCycle: "MONTHLY" })}
                         className="text-blue-600"
                       />
-                      <span>Monthly</span>
+                      <span className="text-slate-800">Monthly</span>
                     </label>
-                    <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                    <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer text-slate-800">
                       <input
                         type="radio"
                         name="billingCycle"
@@ -385,12 +679,12 @@ function RegisterContent() {
                         onChange={() => setFormData({ ...formData, billingCycle: "YEARLY" })}
                         className="text-blue-600"
                       />
-                      <span>Yearly (Save 17%)</span>
+                      <span className="text-slate-800">Yearly (Save 17%)</span>
                     </label>
                   </div>
                 </div>
 
-                {/* Custom Notes */}
+                {/* 6. Custom Notes */}
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                     Special Requests / Custom Modules Needed (Optional)
@@ -409,7 +703,7 @@ function RegisterContent() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-sm rounded-2xl shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+                  className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-sm rounded-2xl shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
                 >
                   {loading ? (
                     <span>Submitting Request...</span>
@@ -454,7 +748,7 @@ function RegisterContent() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-emerald-400" />
-                    <span>সম্পূর্ণ স্বতন্ত্র ও এনক্রিপ্টেড ক্লাউড ডেটাবেজ</span>
+                    <span>ডেডিকেটেড লাইভ ওয়েবসাইট ও ডোমেন সেটআপ</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-emerald-400" />
